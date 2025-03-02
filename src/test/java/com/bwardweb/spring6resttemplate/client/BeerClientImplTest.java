@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
 
+import java.math.BigDecimal;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
@@ -39,6 +41,21 @@ class BeerClientImplTest {
 
         assertNotNull(beerDTO);
 
+    }
+
+    @Test
+    public void testCreateBeer(){
+        BeerDTO newDto = BeerDTO.builder()
+                .price(new BigDecimal(5.88))
+                .beerName("Bees Beer")
+                .beerStyle(BeerStyle.GOSE)
+                .quantityOnHand(87)
+                .upc("876847")
+                .build();
+
+        BeerDTO savedDto = beerClient.createBeer(newDto);
+
+        assertNotNull(savedDto);
     }
 
 }
