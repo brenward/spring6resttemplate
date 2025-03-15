@@ -52,12 +52,21 @@ public class BeerClientMockTest {
     @Mock
     RestTemplateBuilder mockRestTemplateBuilder = new RestTemplateBuilder(new MockServerRestTemplateCustomizer());
 
+    BeerDTO beerDTO;
+    String payload;
+    UUID uuid;
+
     @BeforeEach
-    void setup(){
+    void setup() throws JsonProcessingException {
         RestTemplate restTemplate = restTemplateBuilder.build();
         server = MockRestServiceServer.bindTo(restTemplate).build();
         when(mockRestTemplateBuilder.build()).thenReturn(restTemplate);
         beerClient = new BeerClientImpl(mockRestTemplateBuilder);
+
+        beerDTO = getBeerDto();
+        uuid = UUID.randomUUID();
+        beerDTO.setId(uuid);
+        payload = objectMapper.writeValueAsString(beerDTO);
     }
 
     @Test
@@ -73,38 +82,44 @@ public class BeerClientMockTest {
     }
 
     @Test
-    public void testGetBeerById() throws JsonProcessingException {
-        BeerDTO beerDTO = getBeerDto();
-        UUID uuid = UUID.randomUUID();
-        beerDTO.setId(uuid);
-        String payload = objectMapper.writeValueAsString(beerDTO);
-
-        server.expect(method(HttpMethod.GET))
-                .andExpect(requestTo(URL + BeerClientImpl.GET_BEER_PATH + "/" + uuid))
-                .andRespond(withSuccess(payload, MediaType.APPLICATION_JSON));
+    public void testGetBeerById() {
+        mockGetById();
 
         BeerDTO response = beerClient.getBeerById(uuid);
         assertThat(response.getId()).isEqualByComparingTo(uuid);
     }
 
-    @Test
-    public void testCreateBeer() throws JsonProcessingException {
-        BeerDTO beerDTO = getBeerDto();
-        UUID uuid = UUID.randomUUID();
-        beerDTO.setId(uuid);
-        String payload = objectMapper.writeValueAsString(beerDTO);
+    private void mockGetById() {
+        server.expect(method(HttpMethod.GET))
+                .andExpect(requestTo(URL + BeerClientImpl.GET_BEER_PATH + "/" + uuid))
+                .andRespond(withSuccess(payload, MediaType.APPLICATION_JSON));
+    }
 
+    @Test
+    public void testCreateBeer() {
         URI uri = UriComponentsBuilder.fromPath(BeerClientImpl.GET_BEER_BY_ID_PATH).build(beerDTO.getId());
 
         server.expect(method(HttpMethod.POST))
                 .andExpect(requestTo(URL + BeerClientImpl.GET_BEER_PATH))
                 .andRespond(withAccepted().location(uri));
 
-        server.expect(method(HttpMethod.GET))
-                .andExpect(requestTo(URL + BeerClientImpl.GET_BEER_PATH + "/" + uuid))
-                .andRespond(withSuccess(payload, MediaType.APPLICATION_JSON));
+        mockGetById();
 
         BeerDTO response = beerClient.createBeer(beerDTO);
+        assertThat(response.getId()).isEqualByComparingTo(uuid);
+    }
+    
+    @Test
+    public void testUpdateBeer(){
+        URI uri = UriComponentsBuilder.fromPath(BeerClientImpl.GET_BEER_BY_ID_PATH).build(beerDTO.getId());
+        
+        server.expect(method(HttpMethod.PUT))
+                .andExpect(requestToUriTemplate(URL + BeerClientImpl.GET_BEER_BY_ID_PATH, uuid))
+                .andRespond(withAccepted().location(uri));
+
+        mockGetById();
+
+        BeerDTO response = beerClient.updateBeer(beerDTO);
         assertThat(response.getId()).isEqualByComparingTo(uuid);
     }
 
