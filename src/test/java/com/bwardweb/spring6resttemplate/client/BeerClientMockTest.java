@@ -30,8 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
-import static org.springframework.test.web.client.response.MockRestResponseCreators.withAccepted;
-import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.*;
 
 @RestClientTest
 @Import(RestTemplateBuilderConfig.class)
@@ -121,6 +120,16 @@ public class BeerClientMockTest {
 
         BeerDTO response = beerClient.updateBeer(beerDTO);
         assertThat(response.getId()).isEqualByComparingTo(uuid);
+    }
+
+    @Test
+    public void testDeleteBeer(){
+        server.expect(method(HttpMethod.DELETE))
+                .andExpect(requestToUriTemplate(URL + BeerClientImpl.GET_BEER_BY_ID_PATH, uuid))
+                .andRespond(withNoContent());
+
+        beerClient.deleteBeer(beerDTO);
+        server.verify();
     }
 
     BeerDTO getBeerDto(){
