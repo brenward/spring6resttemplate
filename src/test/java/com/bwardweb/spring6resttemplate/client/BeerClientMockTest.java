@@ -22,6 +22,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
@@ -67,6 +68,21 @@ public class BeerClientMockTest {
 
         Page<BeerDTO> dtos = beerClient.listBeers();
         assertThat(dtos.getContent().size()).isGreaterThan(0);
+    }
+
+    @Test
+    public void testGetBeerById() throws JsonProcessingException {
+        BeerDTO beerDTO = getBeerDto();
+        UUID uuid = UUID.randomUUID();
+        beerDTO.setId(uuid);
+        String payload = objectMapper.writeValueAsString(beerDTO);
+
+        server.expect(method(HttpMethod.GET))
+                .andExpect(requestTo(URL + BeerClientImpl.GET_BEER_PATH + "/" + uuid))
+                .andRespond(withSuccess(payload, MediaType.APPLICATION_JSON));
+
+        BeerDTO response = beerClient.getBeerById(uuid);
+        assertThat(response.getId()).isEqualByComparingTo(uuid);
     }
 
     BeerDTO getBeerDto(){
